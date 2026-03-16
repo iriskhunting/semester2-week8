@@ -10,26 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "pgm_tools.h"
 
-/* TODO: Define a PGMImage structure that encapsulates:
-   - width and height
-   - max_gray value
-   - 2D array of pixel values (pixels)
-*/
-
-
-/* TODO: Update these function prototypes to use your PGMImage structure */
-/* Function prototypes */
-unsigned char **allocate_image_array(int height, int width);
-void free_image_array(unsigned char **image, int height);
-unsigned char **read_pgm_image(const char *filename, int *height, int *width, int *max_gray);
-void print_image_info(const char *filename, int height, int width, int max_gray);
-void print_image_values(unsigned char **pixels, int height, int width);
-unsigned char **invert_image_colors(unsigned char **original_image, int height, int width, int max_gray);
-unsigned char **rotate_image(unsigned char **original_image, int height, int width, int degrees);
-int save_pgm_image(const char *filename, unsigned char **pixels, int height, int width, int max_gray);
-int get_user_menu_choice(const char *message);
-void display_menu(void);
 
 int main(int argc, char **argv) {
     /* Check command line arguments */
@@ -43,8 +25,20 @@ int main(int argc, char **argv) {
     int height, width, max_gray;
     unsigned char **image_pixels;
     
+    /* Allocate memory for the image structure */
+    PGMImage *image = (PGMImage *)malloc(sizeof(PGMImage));
+
+    /* Allocate memory for the rows */
+    image->pixels = (unsigned char **)malloc(height * sizeof(unsigned char *));
+
+    /* Allocate memory for each row */
+    for (int i = 0; i < height; i++) {
+        image->pixels[i] = (unsigned char *)malloc(width * sizeof(unsigned char));
+    }
+
+
     /* Read the image */
-    image_pixels = read_pgm_image(argv[1], &height, &width, &max_gray);
+    read_pgm_image(argv[1], &image, &height, &width, &max_gray);
     
     /* Check if image reading was successful */
     if (image_pixels == NULL) {
@@ -220,12 +214,10 @@ void free_image_array(unsigned char **image, int height) {
  * @brief Reads a PGM image from a file
  * 
  * @param filename Path to the PGM file
- * @param height Pointer to store the image height
- * @param width Pointer to store the image width
- * @param max_gray Pointer to store the max gray value
+ * @param image Pointer to PGMImage struct
  * @return unsigned char** 2D array of image pixels, or NULL if reading fails
  */
-unsigned char **read_pgm_image(const char *filename, int *height, int *width, int *max_gray) {
+unsigned char **read_pgm_image(const char *filename, PGMImage *image) {
     /* TODO: Refactor this to use your PGMImage structure */
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -247,24 +239,25 @@ unsigned char **read_pgm_image(const char *filename, int *height, int *width, in
         return NULL;
     }
     
-    if (fscanf(file, "%d %d", width, height) != 2) {
+    if (fscanf(file, "%f %f", image->width, image->height) != 2) {
         printf("Error: Could not read image dimensions\n");
         fclose(file);
         return NULL;
     }
     
-    if (fscanf(file, "%d", max_gray) != 1) {
+    if (fscanf(file, "%d", image->max_gray) != 1) {
         printf("Error: Could not read max gray value\n");
         fclose(file);
         return NULL;
     }
-    
+   
+    // REPLACE
     /* Allocate memory for the pixel array */
-    unsigned char **pixels = allocate_image_array(*height, *width);
-    if (pixels == NULL) {
-        fclose(file);
-        return NULL;
-    }
+    //unsigned char **pixels = allocate_image_array(*height, *width);
+    //if (pixels == NULL) {
+    //    fclose(file);
+    //    return NULL;
+    //}
     
     /* Read pixel values */
     int pixel_value;
@@ -276,11 +269,13 @@ unsigned char **read_pgm_image(const char *filename, int *height, int *width, in
                 fclose(file);
                 return NULL;
             }
-            pixels[i][j] = (unsigned char)pixel_value;
+            // Assign value to struct
+            image->pixels[i][j] = (unsigned char)pixel_value;
         }
     }
     
     fclose(file);
+
     return pixels;
 }
 
